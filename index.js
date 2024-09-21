@@ -39,6 +39,23 @@ app.get('/', (req, res) => {
   res.send('Job Search API');
 });
 
+// routes/jobs.js (add query parameters for pagination)
+router.get('/', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, keyword } = req.query;
+    const query = keyword ? { title: { $regex: keyword, $options: 'i' } } : {};
+
+    const jobs = await Job.find(query)
+      .sort({ datePosted: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
+
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Schedule job fetching
 cron.schedule('0 0 * * *', () => {
   console.log('Fetching jobs...');
