@@ -1,0 +1,60 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .job {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .job h3 {
+      margin: 0;
+    }
+    .job a {
+      text-decoration: none;
+      color: blue;
+    }
+  </style>
+</head>
+<body>
+  <h1>Programming Job Openings</h1>
+  <div id="jobs"></div>
+
+  <script>
+    async function fetchJobs() {
+      try {
+        const response = await fetch('http://localhost:5000/api/jobs');
+        const jobs = await response.json();
+        const jobsDiv = document.getElementById('jobs');
+        jobsDiv.innerHTML = '';
+
+        jobs.forEach(job => {
+          const jobDiv = document.createElement('div');
+          jobDiv.classList.add('job');
+          jobDiv.innerHTML = `
+            <h3>${job.title}</h3>
+            <p><strong>Company:</strong> ${job.company}</p>
+            <p><strong>Location:</strong> ${job.location || 'N/A'}</p>
+            <a href="${job.url}" target="_blank">View Job</a>
+          `;
+          jobsDiv.appendChild(jobDiv);
+        });
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      }
+    }
+
+    // Fetch jobs on page load
+    window.onload = fetchJobs;
+  </script>
+</body>
+</html>
