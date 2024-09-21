@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cron = require('node-cron');
 const path = require('path');
-
+const cors = require('cors'); // Added CORS
 const fetchJobs = require('./services/jobService'); // or require('./services/scrapeJobs')
 const jobRoutes = require('./routes/jobs');
 
@@ -13,16 +13,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Serve static files from frontend
-app.use(express.static(path.join(__dirname, 'frontend')));
-
-// Fallback to `index.html` for any other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
-});
-
 // Middleware
 app.use(express.json());
+
+// Enable CORS if frontend is served from a different origin
+app.use(cors({
+  origin: 'http://localhost:3000', // Update this to your frontend's actual URL
+  optionsSuccessStatus: 200
+}));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -30,30 +28,17 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected'))
-.catch(err => console.log(err));
+.catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
+// API Routes
 app.use('/api/jobs', jobRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Job Search API');
-});
+// Serve static files from frontend
+app.use(express.static(path.join(__dirname, 'frontend')));
 
-// routes/jobs.js (add query parameters for pagination)
-router.get('/', async (req, res) => {
-  try {
-    const { page = 1, limit = 20, keyword } = req.query;
-    const query = keyword ? { title: { $regex: keyword, $options: 'i' } } : {};
-
-    const jobs = await Job.find(query)
-      .sort({ datePosted: -1 })
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit));
-
-    res.json(jobs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+// Fallback to `index.html` for any other routes (should be after API routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
 // Schedule job fetching
